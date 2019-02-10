@@ -58,7 +58,7 @@ CREATE TABLE `main` (
   `category_id` int(11) NOT NULL,
   `author` varchar(50) NOT NULL,
   `email` varchar(50) NOT NULL,
-  `toShow` tinyint(1) NOT NULL DEFAULT '0',
+  `is_hidden` tinyint(1) NOT NULL DEFAULT '0',
   `date_added` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -66,7 +66,7 @@ CREATE TABLE `main` (
 -- Дамп данных таблицы `main`
 --
 
-INSERT INTO `main` (`id`, `user_id`, `question`, `answer`, `category_id`, `author`, `email`, `toShow`, `date_added`) VALUES
+INSERT INTO `main` (`id`, `user_id`, `question`, `answer`, `category_id`, `author`, `email`, `is_hidden`, `date_added`) VALUES
 (3, NULL, 'Как зовут Бетховена', 'Людвиг', 2, 'Альберт', 'musa@google.com', 0, '2019-02-04 19:46:37'),
 (4, NULL, 'Кто снял бриллиантовую руку', NULL, 1, 'Марк', 'tom@mail.ru', 1, '2019-02-04 19:47:15'),
 (5, NULL, 'Кто был первый чемпион мира', NULL, 3, 'Витя', 'sport@mail.ru', 0, '2019-02-05 20:31:33');
