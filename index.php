@@ -95,7 +95,6 @@ if (isset($_SESSION['user_id'])) {
 		$stmt = $pdo->prepare("INSERT INTO user (login,password) VALUES (:login,:password)");
 		$stmt->execute(["login"=>$_POST['new_login'],"password"=>$_POST['new_password']]);
 		$ins = $stmt->fetchAll(PDO::FETCH_ASSOC);
-		//!!!Добавлять ли header чтобы обновлялась страница?
 	}
 }	
 // получение данных вопросы и ответы
@@ -108,8 +107,66 @@ if (isset($_SESSION['user_id'])) {
 		$stmt = $pdo->prepare("INSERT INTO category (category) VALUES ('".$_POST['new_category']."')");
 		$stmt->execute();
 		$cat = $stmt->fetchAll(PDO::FETCH_ASSOC);
-		//!!!Добавлять ли header чтобы обновлялась страница?
 	}
+// просмор темы	
+	if (isset($_SESSION['user_id'])) {
+		if (isset($_GET['show'],$_GET['category_id'])) {
+		$stmt = $pdo->prepare("SELECT * FROM main WHERE category_id=".$_GET['category_id']."");
+		$stmt->execute();
+		$showCategory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
+}	
+// скрыть/ показать вопросв теме	
+	if (isset($_SESSION['user_id'])) {
+		if (isset($_GET['show'],$_GET['main_id'])) {
+			if ($_GET['show'] == 0) {
+				$stmt = $pdo->prepare("UPDATE main SET toShow = 1 WHERE id=".$_GET['main_id']."");
+				$stmt->execute();
+				$showChange = $stmt->fetchAll(PDO::FETCH_ASSOC);	
+				header("location:index.php");
+			}
+			elseif ($_GET['show'] == 1) {
+				$stmt = $pdo->prepare("UPDATE main SET toShow = 0 WHERE id=".$_GET['main_id']."");
+				$stmt->execute();
+				$showChange = $stmt->fetchAll(PDO::FETCH_ASSOC);
+				header("location:index.php"); // как сделать чтобы не пропадала выбранная тема, после обновления статуса.
+			}
+	}
+}	
+// удаление темы	
+if (isset($_SESSION['user_id'])) {
+	if (isset($_GET['del'],$_GET['main_id'])) {
+	$stmt = $pdo->prepare("DELETE FROM main WHERE id=".$_GET['main_id']."");
+	$stmt->execute();
+	$delQuestion = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	header("location:index.php");
+	}
+}	
+// редактирование автора, вопроса, ответа	
+if (isset($_SESSION['user_id'])) {
+	if (isset($_POST['show'])) {
+					var_dump($_POST);
+		if (isset($_POST['id'],$_POST['update_question'],$_POST['update_answer'],$_POST['update_author'],$_POST['update_theme'])) {
+		$stmt = $pdo->prepare("UPDATE main SET question='".$_POST['update_question']."', answer='".$_POST['update_answer']."', author='".$_POST['update_author']."', category_id='".$_POST['update_theme']."', toShow = 1 WHERE id=".$_POST['id']."");
+		$stmt->execute();
+		$updateQuestion = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		header("location:index.php");
+		}
+	}	
+	else {
+		if (isset($_POST['id'],$_POST['update_question'],$_POST['update_answer'],$_POST['update_author'],$_POST['update_theme'])) {
+			var_dump($_POST);
+		$stmt = $pdo->prepare("UPDATE main SET question='".$_POST['update_question']."', answer='".$_POST['update_answer']."', author='".$_POST['update_author']."', category_id='".$_POST['update_theme']."' WHERE id=".$_POST['id']."");
+		$stmt->execute();
+		$updateQuestion = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		header("location:index.php");
+		}
+	}
+}
+//список вопросов в порядке добавления
+	$stmt = $pdo->prepare("SELECT * FROM main WHERE answer = '' ORDER BY YEAR(date_added) ASC, MONTH(date_added) ASC,DAY(date_added) ASC");
+	$stmt->execute();
+	$table_no_answer = $stmt->fetchAll(PDO::FETCH_ASSOC);
  ?>
 <!doctype html>
 <html lang="ru">
@@ -170,8 +227,7 @@ if (isset($_SESSION['user_id'])) {
 			</thead>
 			<?php foreach ($category as $row) { ?>
  			<tr>
-	 			<td><?= $row['category'] ?></td>
-
+	 			<td><a href="index.php?show=true&category_id=<?=$row['id'] ?>"><?= $row['category'] ?></a></td>
 				<td>
 					<?php $i=0; foreach ($describeCategory as $describeCategory_value) {
 						if ($describeCategory_value['category'] == $row['category']) {
@@ -206,7 +262,141 @@ if (isset($_SESSION['user_id'])) {
 				<input name="new_category" type="text" placeholder="Название темы">
 				<input type="submit" value="Создать тему">
 			</form>
+			<?php if (!empty($showCategory)) : ?>
+			<h3>просмотр и изменение тем</h3>
+			
+			<table>
+		 		<thead>
+					<th>Вопросы</th>
+					<th>Ответы</th>
+					<th>Автор</th>
+					<th>Дата создания</th>
+					<th>Статус</th>
+					<th>Скрыть</th>
+					<th>Переместить</th>
+					<th>Редактировать</th>
+					<th>Удалить</th>
+				</thead>
+				<?php foreach ($showCategory as $categoryValue) { ?>
+				
+				<tr>
+					<td>
+						<form action="" method="POST" id="form<?=$categoryValue['id'] ?>">
+						<textarea name="update_question" form="form<?=$categoryValue['id'] ?>"><?=$categoryValue['question'] ?></textarea>
+						</form>
+					</td>
+					<td>
+						<form action="" method="POST" id="form<?=$categoryValue['id'] ?>">
+						<textarea name="update_answer" form="form<?=$categoryValue['id'] ?>"><?=$categoryValue['answer'] ?></textarea>
+						</form>
+					</td>
+					<td>
+						<form action="" method="POST" id="form<?=$categoryValue['id'] ?>">
+						<input type="hidden" name="id" form="form<?=$categoryValue['id'] ?>" value="<?=$categoryValue['id'] ?>">
+						<input type="text" name="update_author" form="form<?=$categoryValue['id'] ?>" value="<?=$categoryValue['author'] ?>">
+						</form>
+					</td>
+					<td>
+						<?=$categoryValue['date_added'] ?>
+					</td>
+					<td>
+						<?php if (empty($categoryValue['answer'])) {
+							echo "Ожидает ответ";
+						}
+						else {
+							if ($categoryValue['toShow']==1) {
+								echo "Опубликовано";
+							}
+							else {
+								echo "Скрыто";
+							}
+						} 
+						?>
+					</td>
+					<td><a href="index.php?show=<?=$categoryValue['toShow'] ?>&main_id=<?=$categoryValue['id'] ?>">Скрыть/Показать</a></td>
+					<td>
+						<form action="" method="POST" id="form<?=$categoryValue['id'] ?>">
+						<select name="update_theme" form="form<?=$categoryValue['id'] ?>">
+							<?php foreach ($category as $category_select) { ?>	
+							<option value="<?= $category_select['id'] ?>" <?php if ($category_select['id'] == $categoryValue['category_id']): ?> selected <?php endif ?> >
+								<?= $category_select['category'] ?>							
+							</option>
+							<?php } ?>		
+						</select>
+					</form>
+					</td>
+					<td>
+						<form action="" method="POST" id="form<?=$categoryValue['id'] ?>">
+						<input type="submit" form="form<?=$categoryValue['id'] ?>" value="Редактировать">
+						</form>
+					</td>
+					<td><a href="index.php?del=true&main_id=<?=$categoryValue['id'] ?>">Удалить</a></td>
+				</tr>
+				<?php } ?>
+			</table>
+			<?php endif; ?>
+				<h3>Неотвеченные вопросы</h3>
+
+					<table>
+				 		<thead>
+							<th>Вопрос</th>
+							<th>Ответ</th>
+							<th>Автор</th>
+							<th>Дата создания</th>
+							<th>Переместить</th>
+							<th>С публикацией</th>
+							<th>Редактировать</th>
+							<th>Удалить</th>
+						</thead>
+						<?php foreach ($table_no_answer as $no_answer) { ?>
+						
+						<tr>
+							<td>
+								<form action="" method="POST" id="form_question_<?=$no_answer['id'] ?>">
+								<textarea name="update_question" form="form_question_<?=$no_answer['id'] ?>"><?=$no_answer['question'] ?></textarea>
+								</form>
+							</td>
+							<td>
+								<form action="" method="POST" id="form_question_<?=$no_answer['id'] ?>">
+								<textarea name="update_answer" form="form_question_<?=$no_answer['id'] ?>"><?=$no_answer['answer'] ?></textarea>
+								</form>
+							</td>
+							<td>
+								<form action="" method="POST" id="form_question_<?=$no_answer['id'] ?>">
+								<input type="hidden" name="id" form="form_question_<?=$no_answer['id'] ?>" value="<?=$no_answer['id'] ?>">
+								<input type="text" name="update_author" form="form_question_<?=$no_answer['id'] ?>" value="<?=$no_answer['author'] ?>">
+								</form>
+							</td>
+							<td>
+								<?=$no_answer['date_added'] ?>
+							</td>
+							<td>
+								<form action="" method="POST" id="form_question_<?=$no_answer['id'] ?>">
+								<select name="update_theme" form="form_question_<?=$no_answer['id'] ?>">
+									<?php foreach ($category as $category_select) { ?>	
+									<option value="<?= $category_select['id'] ?>" <?php if ($category_select['id'] == $no_answer['category_id']): ?> selected <?php endif ?> >
+										<?= $category_select['category'] ?>							
+									</option>
+									<?php } ?>		
+								</select>
+								</form>
+							</td>
+							<td>
+								<form action="" method="POST" id="form_question_<?=$no_answer['id'] ?>">
+								<input type="checkbox" name="show" form="form_question_<?=$no_answer['id'] ?>" id="show<?=$no_answer['id'] ?>" <?php if ($no_answer['toShow'] == 1) : ?> checked <?php endif ?>><label for="show<?=$no_answer['id'] ?>">Публиковать</label>
+								</form>
+							</td>
+							<td>
+								<form action="" method="POST" id="form_question_<?=$no_answer['id'] ?>">
+								<input type="submit" form="form_question_<?=$no_answer['id'] ?>" value="Редактировать">
+								</form>
+							</td>
+							<td><a href="index.php?del=true&main_id=<?=$no_answer['id'] ?>">Удалить</a></td>
+						</tr>
+						<?php } ?>
+					</table>
 			<?php } ?>
+	
 	<h3>Вопросы</h3>
  	 <form action="" method="POST">
  	 	<p><label for="user_question">Введите свой вопрос </label><input type="text" name="user_question" id="user_question" required></p>
