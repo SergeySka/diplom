@@ -98,7 +98,7 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 //получение данных вопросы и ответы
-$stmt = $pdo->prepare("SELECT answer,category_id,toShow,category FROM main m INNER JOIN category c ON m.category_id=c.id");
+$stmt = $pdo->prepare("SELECT answer,category_id,is_hidden,category FROM main m INNER JOIN category c ON m.category_id=c.id");
 $stmt->execute();
 $describeCategory = $stmt->fetchAll(PDO::FETCH_ASSOC);
 //добавление новой темы
@@ -120,12 +120,12 @@ if (isset($_SESSION['user_id'])) {
 if (isset($_SESSION['user_id'])) {
     if (isset($_GET['show'], $_GET['main_id'])) {
         if ($_GET['show'] == 0) {
-            $stmt = $pdo->prepare("UPDATE main SET toShow = 1 WHERE id=" . $_GET['main_id'] . "");
+            $stmt = $pdo->prepare("UPDATE main SET is_hidden = 1 WHERE id=" . $_GET['main_id'] . "");
             $stmt->execute();
             $showChange = $stmt->fetchAll(PDO::FETCH_ASSOC);
             header("location:index.php");
         } elseif ($_GET['show'] == 1) {
-            $stmt = $pdo->prepare("UPDATE main SET toShow = 0 WHERE id=" . $_GET['main_id'] . "");
+            $stmt = $pdo->prepare("UPDATE main SET is_hidden = 0 WHERE id=" . $_GET['main_id'] . "");
             $stmt->execute();
             $showChange = $stmt->fetchAll(PDO::FETCH_ASSOC);
             header("location:index.php"); // как сделать чтобы не пропадала выбранная тема, после обновления статуса.
@@ -146,7 +146,7 @@ if (isset($_SESSION['user_id'])) {
     if (isset($_POST['show'])) {
         var_dump($_POST);
         if (isset($_POST['id'], $_POST['update_question'], $_POST['update_answer'], $_POST['update_author'], $_POST['update_theme'])) {
-            $stmt = $pdo->prepare("UPDATE main SET question='" . $_POST['update_question'] . "', answer='" . $_POST['update_answer'] . "', author='" . $_POST['update_author'] . "', category_id='" . $_POST['update_theme'] . "', toShow = 1 WHERE id=" . $_POST['id'] . "");
+            $stmt = $pdo->prepare("UPDATE main SET question='" . $_POST['update_question'] . "', answer='" . $_POST['update_answer'] . "', author='" . $_POST['update_author'] . "', category_id='" . $_POST['update_theme'] . "', is_hidden = 1 WHERE id=" . $_POST['id'] . "");
             $stmt->execute();
             $updateQuestion = $stmt->fetchAll(PDO::FETCH_ASSOC);
             header("location:index.php");
@@ -240,7 +240,7 @@ $table_no_answer = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php $i = 0;
                     foreach ($describeCategory as $describeCategory_value) {
                         if ($describeCategory_value['category'] == $row['category']) {
-                            if ($describeCategory_value['toShow'] == 1) {
+                            if ($describeCategory_value['is_hidden'] == 1) {
                                 $i++;
                             }
                         }
@@ -310,7 +310,7 @@ $table_no_answer = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php if (empty($categoryValue['answer'])) {
                             echo "Ожидает ответ";
                         } else {
-                            if ($categoryValue['toShow'] == 1) {
+                            if ($categoryValue['is_hidden'] == 1) {
                                 echo "Опубликовано";
                             } else {
                                 echo "Скрыто";
@@ -319,7 +319,7 @@ $table_no_answer = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         ?>
                     </td>
                     <td>
-                        <a href="index.php?show=<?= $categoryValue['toShow'] ?>&main_id=<?= $categoryValue['id'] ?>">Скрыть/Показать</a>
+                        <a href="index.php?show=<?= $categoryValue['is_hidden'] ?>&main_id=<?= $categoryValue['id'] ?>">Скрыть/Показать</a>
                     </td>
                     <td>
                         <form action="" method="POST" id="form<?= $categoryValue['id'] ?>">
@@ -393,7 +393,7 @@ $table_no_answer = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <td>
                     <form action="" method="POST" id="form_question_<?= $no_answer['id'] ?>">
                         <input type="checkbox" name="show" form="form_question_<?= $no_answer['id'] ?>"
-                               id="show<?= $no_answer['id'] ?>" <?php if ($no_answer['toShow'] == 1) : ?> checked <?php endif ?>><label
+                               id="show<?= $no_answer['id'] ?>" <?php if ($no_answer['is_hidden'] == 1) : ?> checked <?php endif ?>><label
                                 for="show<?= $no_answer['id'] ?>">Публиковать</label>
                     </form>
                 </td>
@@ -428,7 +428,7 @@ $table_no_answer = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <?php foreach ($category as $row) { ?>
     <h2><?= $row['category'] ?></h2>
     <?php foreach ($table as $value) { ?>
-        <?php if (($row['id'] == $value['category_id']) && ($value['toShow'] == 1)) : ?>
+        <?php if (($row['id'] == $value['category_id']) && ($value['is_hidden'] == 1)) : ?>
             <input class="hide" id="<?= $value['id'] ?>" type="checkbox">
             <label for="<?= $value['id'] ?>"><?= $value['question'] ?></label>
             <div>Здесь будет ответ</div>
